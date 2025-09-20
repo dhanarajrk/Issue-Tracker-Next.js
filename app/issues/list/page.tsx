@@ -19,6 +19,14 @@ const IssuesListPage = async ({ searchParams }: Props) => {
     orderBy: { createdAt: 'desc' },
     skip: (page - 1) * pageSize,  //How many issue records to be skipped in Page 3 → skip = (3 - 1) * 10 = 20 → skip the first 20 issues. 
     take: pageSize, //Tells Prisma how many records to fetch/take after skipping (ie. 10 pages after skipped records)
+    include: { //aslo include assignedTo and its @relation fields such as name and email
+      assignedTo: {
+        select: {
+          name: true,
+          email: true,
+        }
+      }
+    }
   });
 
   const issueCount = await prisma.issue.count(); //Total isue records in DB
@@ -37,6 +45,7 @@ const IssuesListPage = async ({ searchParams }: Props) => {
           <Table.Row>
             <Table.ColumnHeaderCell>Issues</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Assigned To</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
           </Table.Row>
         </Table.Header>
@@ -50,6 +59,16 @@ const IssuesListPage = async ({ searchParams }: Props) => {
 
               <Table.Cell>
                 <IssueStatusBadge status={issue.status} />
+              </Table.Cell>
+
+              <Table.Cell>
+                {issue.assignedTo ? (
+                  <span className="text-sm">
+                    {issue.assignedTo.name || issue.assignedTo.email}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 text-sm">Unassigned</span>
+                )}
               </Table.Cell>
 
               <Table.Cell>
