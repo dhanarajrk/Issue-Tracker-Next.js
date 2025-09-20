@@ -134,7 +134,6 @@ const EditIssuePage = ({ params }: Props) => { //Even though this is Client Comp
               <Select.Root defaultValue={field.value || ''} onValueChange={field.onChange}>
                 <Select.Trigger placeholder='Assign to user...' />
                 <Select.Content>
-                  <Select.Item value="unassigned">Unassigned</Select.Item>
                   {users.map(user => (
                     <Select.Item key={user.id} value={user.id}>
                       {user.name || user.email}

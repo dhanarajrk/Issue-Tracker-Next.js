@@ -3,6 +3,7 @@ import prisma from "@/prisma/client";
 import { patchIssueSchema } from "@/app/validationSchema";
 import { getServerSession } from "next-auth";
 import authOptions from "../../auth/authOptions";
+import { error } from "console";
 
 interface Props {
     params: Promise<{id: string}>; //expected issue ID type from URL params 
@@ -87,17 +88,41 @@ export async function DELETE(request: NextRequest, { params }: Props) {
     if(!session){
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
-    //find user ID and delete its record
-    const { id } = await params;
+
+    //Find current session user to check its role and to see if he can delete it:
+    const currentUser = await prisma.user.findUnique({
+        where: { email: session.user!.email! }
+    });
+
+    if(!currentUser) {
+        return NextResponse.json({error: "Current User not found"}, {status:404});
+    }
+
+    //Then get Who Created the issue (Only those User who raised the Issue OR Admin can Delete it)
+    const { id } = await params; //issue Id passed down from params
     const issue = await prisma.issue.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: parseInt(id) },
+        include:{
+            createdBy: { //Include the creatorID information
+                select:{
+                    id: true //this id is creatorID
+                }
+            }
+        }
     });
 
     if (!issue) {
         return NextResponse.json({ error: 'Invalid issue' }, { status: 404 });
     }
 
+    // Delete Authorization: Only allow if user is ADMIN or created the issue
+    if(currentUser.role!=='ADMIN' && issue.createdById !==currentUser.id) {
+        return NextResponse.json(
+            { error: 'You can only delete your own issues' }, 
+            { status: 403 } //Forbidden
+        );
+    }
+    
     await prisma.issue.delete({
         where: { id: issue.id }
     });
