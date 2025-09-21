@@ -26,7 +26,7 @@ model Issue {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   assignedToUserId String? // to track who the issue is assigned to
-  assignedTo       User?    @relation("IssueAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull) // Named relation
+  assignedTo       User?    @relation("IssueAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull) // Named relation since both assignedTo and createdBy points to User model, we need to name seperately for each relations). Fields(foreign key as assignedToUserId from Issue model)-->Reference(with id from User model) 
   createdById      String?
   createdBy        User?    @relation("IssueCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 }
@@ -64,8 +64,8 @@ model User {
   role           Role      @default(USER)
   accounts       Account[]
   sessions       Session[]
-  assignedIssues Issue[]   @relation("IssueAssignedTo") // back-relation for Issue.assignedTo
-  Issue          Issue[]   @relation("IssueCreatedBy")
+  assignedIssues Issue[]   @relation("IssueAssignedTo") // back-relation for Issue.assignedTo   (back-relation to know from which named relation)
+  Issue          Issue[]   @relation("IssueCreatedBy") // back-relation for Issue.createdBy
 }
 
 model VerificationToken {
